@@ -64,11 +64,7 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	if skipAppDetectorSync(ss.Annotations, ss.Namespace) {
-		logger.V(5).Info("skipped statefulset")
-		return ctrl.Result{}, nil
-	}
-
+	logger.Info("In stateful set sync")
 	err = syncAppDetectors(ctx, &req, r.Client, r.Scheme, ss.Status.ReadyReplicas, &ss, &ss.Spec.Template, instAppSSOwnerKey)
 	if err != nil {
 		logger.Error(err, "error syncing instrumented apps with statefulsets")
@@ -80,7 +76,6 @@ func (r *StatefulSetReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *StatefulSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Index InstrumentedApps by owner for fast lookup
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.AppDetector{}, instAppSSOwnerKey, func(rawObj client.Object) []string {
 		instApp := rawObj.(*v1.AppDetector)
 		owner := metav1.GetControllerOf(instApp)

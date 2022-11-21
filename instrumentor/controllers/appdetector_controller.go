@@ -72,8 +72,6 @@ func (r *AppDetectorReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Language not detected yet - start the lang detection process
 	if r.shouldStartAppDetection(&detectedApp) {
-		logger.V(0).Info("starting app detection process")
-
 		detectedApp.Status.AppDetection.Phase = v1.RunningAppDetectionPhase
 		err = r.Status().Update(ctx, &detectedApp)
 		if err != nil {
@@ -216,7 +214,7 @@ func (r *AppDetectorReconciler) choosePods(ctx context.Context, labels map[strin
 	return nil, consts.PodsNotFoundErr
 }
 
-func (r *AppDetectorReconciler) createAppDetectionPod(targetPod *corev1.Pod, instrumentedApp *v1.AppDetector) (*corev1.Pod, error) {
+func (r *AppDetectorReconciler) createAppDetectionPod(targetPod *corev1.Pod, appDetector *v1.AppDetector) (*corev1.Pod, error) {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: fmt.Sprintf("%s-app-detection-", targetPod.Name),
@@ -248,7 +246,7 @@ func (r *AppDetectorReconciler) createAppDetectionPod(targetPod *corev1.Pod, ins
 		},
 	}
 
-	err := ctrl.SetControllerReference(instrumentedApp, pod, r.Scheme)
+	err := ctrl.SetControllerReference(appDetector, pod, r.Scheme)
 	if err != nil {
 		return nil, err
 	}
@@ -265,16 +263,16 @@ func (r *AppDetectorReconciler) getContainerNames(pod *corev1.Pod) []string {
 	return result
 }
 
-func (r *AppDetectorReconciler) getOwnerTemplateLabels(ctx context.Context, instrumentedApp *v1.AppDetector) (map[string]string, error) {
-	owner := metav1.GetControllerOf(instrumentedApp)
+func (r *AppDetectorReconciler) getOwnerTemplateLabels(ctx context.Context, appDetector *v1.AppDetector) (map[string]string, error) {
+	owner := metav1.GetControllerOf(appDetector)
 	if owner == nil {
-		return nil, errors.New("could not find owner for InstrumentedApp")
+		return nil, errors.New("could not find owner for appDetector")
 	}
 
 	if owner.Kind == "Deployment" && owner.APIVersion == appsv1.SchemeGroupVersion.String() {
 		var dep appsv1.Deployment
 		err := r.Get(ctx, client.ObjectKey{
-			Namespace: instrumentedApp.Namespace,
+			Namespace: appDetector.Namespace,
 			Name:      owner.Name,
 		}, &dep)
 		if err != nil {
@@ -285,7 +283,7 @@ func (r *AppDetectorReconciler) getOwnerTemplateLabels(ctx context.Context, inst
 	} else if owner.Kind == "StatefulSet" && owner.APIVersion == appsv1.SchemeGroupVersion.String() {
 		var ss appsv1.StatefulSet
 		err := r.Get(ctx, client.ObjectKey{
-			Namespace: instrumentedApp.Namespace,
+			Namespace: appDetector.Namespace,
 			Name:      owner.Name,
 		}, &ss)
 		if err != nil {

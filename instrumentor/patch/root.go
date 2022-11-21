@@ -6,24 +6,30 @@ import (
 	apiV1 "github.com/logzio/app-type-detector/api/v1alpha1"
 	"github.com/logzio/app-type-detector/common"
 	v1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Patcher interface {
-	Patch(podSpec *v1.PodTemplateSpec, detected *apiV1.AppDetector)
-	shouldPatch(podSpec *v1.PodTemplateSpec) bool
+	Patch(ctx context.Context, detected *apiV1.AppDetector, object client.Object) error
+	shouldPatch(annotations map[string]string, namespace string) bool
 }
 
 var patcherMap = map[string]Patcher{}
 
-func ModifyObject(ctx context.Context, original *v1.PodTemplateSpec, detectedApplication *apiV1.AppDetector) error {
+func ModifyObject(ctx context.Context, kubeClient client.Client, detectedApplication *apiV1.AppDetector, object client.Object, req *ctrl.Request) error {
 	for _, app := range getApplicationsInResult(ctx, detectedApplication) {
 		p, exists := patcherMap[app]
 		if !exists {
 			return fmt.Errorf("unable to find patcher for app %s", app)
 		}
 
-		p.Patch(original, detectedApplication)
+		err := p.Patch(ctx, detectedApplication, object)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -37,13 +43,14 @@ func IsDetected(ctx context.Context, original *v1.PodTemplateSpec, detectedApp *
 			return false, fmt.Errorf("unable to find patcher for %s", app)
 		}
 
-		isDetected = isDetected && p.shouldPatch(original)
+		isDetected = isDetected && p.shouldPatch(original.Annotations, original.Namespace)
 	}
 
 	return isDetected, nil
 }
 
-/**
+/*
+*
 get running detected applications
 */
 func getApplicationsInResult(ctx context.Context, detectedApplication *apiV1.AppDetector) []string {

@@ -58,10 +58,6 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if skipAppDetectorSync(dep.Annotations, dep.Namespace) {
-		return ctrl.Result{}, nil
-	}
-
 	err = syncAppDetectors(ctx, &req, r.Client, r.Scheme, dep.Status.ReadyReplicas, &dep, &dep.Spec.Template, instAppDepOwnerKey)
 	if err != nil {
 		logger.Error(err, "error syncing detected apps with deployments")
@@ -73,7 +69,6 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Index InstrumentedApps by owner for fast lookup
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.AppDetector{}, instAppDepOwnerKey, func(rawObj client.Object) []string {
 		instApp := rawObj.(*v1.AppDetector)
 		owner := metav1.GetControllerOf(instApp)

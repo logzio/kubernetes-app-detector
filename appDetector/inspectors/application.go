@@ -11,7 +11,6 @@ type ApplicationInspector struct{}
 var application = &ApplicationInspector{}
 
 /*
-*
 Returns an application name if that name exists in either exe or command line
 */
 func (appInspector *ApplicationInspector) Inspect(process *process.Details) (string, bool) {
@@ -34,34 +33,18 @@ func (appInspector *ApplicationInspector) Inspect(process *process.Details) (str
 		}
 	}
 
-	if len(detectedApps) == 1 {
-		return getFirstAppInMap(detectedApps), true
-	}
-
-	if len(detectedApps) > 1 {
-		return findBestAppMatch(detectedApps), true
-	}
-	return "", false
+	return findAppMatch(detectedApps)
 }
 
-func getFirstAppInMap(detectedApps map[string]bool) string {
-	for key := range detectedApps {
-		return key
-	}
-
-	return ""
-}
-
-/**
-return best match for detected app names -as of now calculated by length
-*/
-func findBestAppMatch(apps map[string]bool) string {
-	topKey := ""
-	for key, _ := range apps {
-		if len(key) > len(topKey) {
-			topKey = key
+func findAppMatch(apps map[string]bool) (string, bool) {
+	res := ""
+	for key := range apps {
+		if value, exists := common.ProcessNameToType[key]; exists {
+			res = value
+			return res, true
 		}
+
 	}
 
-	return topKey
+	return res, false
 }

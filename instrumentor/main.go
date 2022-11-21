@@ -37,6 +37,11 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
+const (
+	AppDetectorImageTag = "0.0.1"
+	AppDetectorImage    = "logzio/kubernetes-app-detector"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -62,8 +67,8 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&appDetectorTag, "app-detector-tag", "0.0.1", "container tag to use for app detection")
-	flag.StringVar(&appDetectorImage, "app-detector-image", "logzio/kubernetes-app-detector", "container image to use for lang detection")
+	flag.StringVar(&appDetectorTag, "app-detector-tag", AppDetectorImageTag, "container tag to use for app detection")
+	flag.StringVar(&appDetectorImage, "app-detector-image", AppDetectorImage, "container image to use for lang detection")
 	flag.BoolVar(&deleteAppDetectionPods, "delete-detection-pods", true, "Automatic termination of detection pods")
 
 	opts := zap.Options{
