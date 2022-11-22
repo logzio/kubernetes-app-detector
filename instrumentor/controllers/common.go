@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	apiV1 "github.com/logzio/app-type-detector/api/v1alpha1"
+	"github.com/logzio/app-type-detector/common/consts"
 	"github.com/logzio/app-type-detector/instrumentor/patch"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,10 +14,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+var IgnoredNamespaces = []string{consts.KubeSystemNamespace, consts.LocalPathStorageNamespace, consts.GateKeeperSystemNamespace, consts.DefaultMonitoringNamespace}
+
 func syncAppDetectors(ctx context.Context, req *ctrl.Request, c client.Client, scheme *runtime.Scheme,
 	readyReplicas int32, object client.Object, podTemplateSpec *v1.PodTemplateSpec, ownerKey string) error {
 
 	logger := log.FromContext(ctx)
+	if ignoreObjectsInNamespace(object.GetNamespace()) {
+		logger.Info("The object namespace is in ignored namespace list, skipping app detection")
+		return nil
+	}
+
 	detectedApps, err := getDetectedApps(ctx, req, c, ownerKey)
 	if err != nil {
 		logger.Info("error finding detected apps objects", "error", err)
@@ -109,6 +117,16 @@ func syncAppDetectors(ctx context.Context, req *ctrl.Request, c client.Client, s
 	}
 
 	return nil
+}
+
+func ignoreObjectsInNamespace(namespace string) bool {
+	for _, ns := range IgnoredNamespaces {
+		if namespace == ns {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getDetectedApps(ctx context.Context, req *ctrl.Request, c client.Client, ownerKey string) (*apiV1.AppDetectorList, error) {

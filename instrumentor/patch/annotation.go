@@ -3,7 +3,6 @@ package patch
 import (
 	"context"
 	"github.com/logzio/app-type-detector/api/v1alpha1"
-	"github.com/logzio/app-type-detector/common/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	goclient "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -19,7 +18,6 @@ var PodOwnedLabels = []string{
 	"app.kubernetes.io/name",
 }
 
-var IgnoredNamespaces = []string{"kube-system", "local-path-storage", "gatekeeper-system", consts.DefaultMonitoringNamespace}
 var clusterClient *goclient.CoreV1Client
 var annotationPatcher = &AnnotationPatcher{}
 
@@ -83,11 +81,6 @@ func podOwnedByObject(labels map[string]string, name string) bool {
 func (d *AnnotationPatcher) shouldPatch(annotations map[string]string, namespace string) bool {
 	for k, v := range annotations {
 		if (k == SkipAnnotation && v == "true") || k == LogzioApplicationTypeAnnotation {
-			return false
-		}
-	}
-	for _, ns := range IgnoredNamespaces {
-		if namespace == ns {
 			return false
 		}
 	}
