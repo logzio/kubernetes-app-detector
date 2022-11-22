@@ -9,7 +9,7 @@ the application name will be added as a value to "logzio/application_type" annot
 **Notes**
 * Supported types for detection: Deployment, StatefulSet
 * In order to skip detection for a specific Deployment/StatefulSet, the following annotation should be added:
-  `logzio.io/skip-app-detection: true`.
+  `logzio/skip_app_detection: true`.
 * Ignored namespaces for app detection:
   * kube-system 
   * local-path-storage

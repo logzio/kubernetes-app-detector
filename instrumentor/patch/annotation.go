@@ -12,7 +12,7 @@ import (
 )
 
 const LogzioApplicationTypeAnnotation = "logzio/application_type"
-const SkipAnnotation = "logzio.io/skip_app_detection"
+const SkipAnnotation = "logzio/skip_app_detection"
 
 var PodOwnedLabels = []string{
 	"app",
