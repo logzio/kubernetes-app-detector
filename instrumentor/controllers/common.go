@@ -109,7 +109,7 @@ func syncAppDetectors(ctx context.Context, req *ctrl.Request, c client.Client, s
 	}
 
 	if detected {
-		err = patch.ModifyObject(ctx, c, &detectedApp, object, req)
+		err = patch.ModifyObject(ctx, &detectedApp, object)
 		if err != nil {
 			logger.Error(err, "error patching deployment / statefulset")
 			return err
