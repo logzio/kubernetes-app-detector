@@ -6,7 +6,6 @@ import (
 	apiV1 "github.com/logzio/app-type-detector/api/v1alpha1"
 	"github.com/logzio/app-type-detector/common"
 	v1 "k8s.io/api/core/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -18,7 +17,7 @@ type Patcher interface {
 
 var patcherMap = map[string]Patcher{}
 
-func ModifyObject(ctx context.Context, kubeClient client.Client, detectedApplication *apiV1.AppDetector, object client.Object, req *ctrl.Request) error {
+func ModifyObject(ctx context.Context, detectedApplication *apiV1.AppDetector, object client.Object) error {
 	for _, app := range getApplicationsInResult(ctx, detectedApplication) {
 		p, exists := patcherMap[app]
 		if !exists {
