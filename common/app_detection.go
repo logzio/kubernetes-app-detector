@@ -17,7 +17,6 @@ var Applications = []Application{
 
 var ProcessNameToType = map[string]string{
 	"kafka-server": "kafka_server",
-	"kafka_server": "kafka_server",
 	"nginx":        "nginx",
 	"mysql":        "mysql",
 }
